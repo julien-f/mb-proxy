@@ -1,0 +1,16 @@
+{
+  // On which address to listen.
+  //
+  // Default: "localhost"
+  //"host": "0.0.0.0",
+
+  // On which port to listen (0 for random).
+  //
+  // Default: 80
+  "port": 0,
+
+  // Mount points for static files.
+  "mounts": {
+    "/": "../client/dist"
+  }
+}

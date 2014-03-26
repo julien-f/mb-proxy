@@ -1,0 +1,22 @@
+{
+  "name": "mb-proxy",
+  "version": "0.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/julien-f/mb-proxy"
+  },
+  "author": "Julien Fontanet <julien.fontanet@isonoe.net> (http://julien.isonoe.net/)",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^1.1.1",
+    "connect": "^2.14.3",
+    "lodash": "^2.4.1",
+    "strip-json-comments": "^0.1.1",
+    "yargs": "^1.2.1"
+  }
+}
