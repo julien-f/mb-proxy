@@ -67,8 +67,6 @@ exports.proxyRequest = function proxyRequest(request, url, opts) {
   _.isString(url) && (url = parseUrl(url));
   var secure = url.protocol === 'https:';
 
-  console.log(_.omit(request.headers, 'host'));
-
   var proxyReq = (secure ? https : http).request({
     hostname: url.hostname,
     port: url.port || (secure ? 443 : 80),
@@ -82,7 +80,6 @@ exports.proxyRequest = function proxyRequest(request, url, opts) {
     if (opts.allowedRedirections && headers.location)
     {
       --opts.allowedRedirections;
-      console.log(headers.location, opts.allowedRedirections);
       return deferred.resolve(proxyRequest(request, headers.location, opts));
     }
 

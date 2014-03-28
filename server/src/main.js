@@ -82,6 +82,7 @@ module.exports = function (argv) {
     {
       var pkg = require('../package');
       console.log('MapBox-Proxy version', pkg.version);
+      process.exit(0);
     }
 
     // Reads the configuration file.
