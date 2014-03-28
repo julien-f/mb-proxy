@@ -6,17 +6,24 @@ var fs = require('fs');
 var http = require('http');
 var path = require('path');
 
-//====================================================================
+//--------------------------------------------------------------------
 
 var _ = require('lodash');
 var connect = require('connect');
+var mkdirp = require('mkdirp');
 var Promise = require('bluebird');
 var stripJsonComments = require('strip-json-comments');
 var yargs = require('yargs');
 
+//--------------------------------------------------------------------
+
+var util = require('./util');
+
 //====================================================================
 
+var mkdirp = Promise.promisify(mkdirp);
 var readFile = Promise.promisify(fs.readFile);
+var writeFile = Promise.promisify(fs.writeFile);
 
 var waitEvent = function (emitter, name) {
   var deferred = Promise.defer();
@@ -101,12 +108,111 @@ module.exports = function (argv) {
     // Creates the connect application.
     var app = connect();
     var configPath = this.configPath;
+    var mapId = this.config.mapId;
+    var cache = path.resolve(configPath, this.config.cache +'/'+ mapId);
+    var tileServer = this.config.tileServer;
     _.each(config.mounts || {}, function (paths, mount) {
       _.each(_.isArray(paths) ? paths : [paths], function (mountPath) {
         app.use(mount, connect.static(
           path.resolve(configPath, mountPath)
         ));
       });
+    });
+    app.use(function (req, res, next) {
+      if (req.method !== 'GET')
+      {
+        return next();
+      }
+
+      var url = req.url;
+
+      if (url === '/tiles.json')
+      {
+        var body = JSON.stringify({
+          tilejson: '2.0.0',
+          tiles: [
+            // All tiles requests should go through this server.
+            '/tiles/{z}/{x}/{y}.png',
+          ],
+          scheme: "xyz",
+          maxzoom: 19,
+          minzoom: 0,
+          autoscale: true,
+          bounds: [
+            -180, // West
+            -85,  // South
+            85,   // East
+            180,  // North
+          ],
+          center: [
+            0,
+            0,
+            4, // Zoom
+          ],
+
+          attribution: "<a href='https://www.mapbox.com/about/maps/' target='_blank'>&copy; Mapbox &copy; OpenStreetMap</a> <a class='mapbox-improve-map' href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a>",
+
+          // Used for search.
+          //geocoder: 'http://a.tiles.mapbox.com/v3/'+ mapId +'/geocode/{query}.jsonp',
+
+          // Used to display custom data on the map.
+          //data: [
+          //  'http://a.tiles.mapbox.com/v3/'+ mapId +'/markers.geojsonp',
+          //],
+
+          // Unknown.
+          //private: true,
+        });
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Content-Length': body.length,
+        });
+        res.write(body);
+        return res.end();
+      }
+
+      var matches = /^\/tiles\/(.*)$/.exec(url);
+      if (matches)
+      {
+        var tile = cache +'/'+ matches[1];
+
+        // TODO: use streams if possible.
+        // TODO: handle if-modified-since.
+        return readFile(tile).catch(function () {
+          return mkdirp(path.dirname(tile)).then(function () {
+            // Disables browser caches.
+            delete req.headers['if-modified-since'];
+            delete req.headers['if-none-match'];
+
+            return util.proxyRequest(req, {
+              hostname: tileServer,
+              path: '/v3/'+ mapId +'/'+ matches[1],
+            }, {
+              allowedRedirections: 10,
+            });
+          }).then(function (response) {
+            if (response.statusCode !== 200)
+            {
+              throw response.statusCode;
+            }
+
+            return util.readStream(response);
+          }).then(function (data) {
+            return writeFile(tile, data).return(data);
+          });
+        }).then(function (data) {
+          res.writeHead(200, {
+            'Content-Type': 'image/png',
+            'Content-Length': data.length,
+          });
+          res.end(data);
+        }).catch(function (error) {
+          console.error('Error', error);
+        });
+      }
+
+      next();
     });
 
     // Creates the HTTP server.

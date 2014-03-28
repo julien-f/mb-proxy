@@ -7,10 +7,18 @@
   // On which port to listen (0 for random).
   //
   // Default: 80
-  "port": 0,
+  //"port": 0,
 
   // Mount points for static files.
   "mounts": {
     "/": "../client/dist"
-  }
+  },
+
+  // Identifier of the map to use.
+  "mapId": "examples.map-9ijuk24y",
+
+  // Directory where to save the cached tiles.
+  "cache": "cache",
+
+  "tileServer": "a.tiles.mapbox.com"
 }

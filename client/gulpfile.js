@@ -93,6 +93,8 @@ var browserify = function (path, opts) {
   return stream;
 };
 
+// `event-stream` is required only when necessary to maximize
+// `performance.
 var pipe = function () {
   pipe = require('event-stream').pipe;
   return pipe.apply(this, arguments);
@@ -115,12 +117,15 @@ var noop = function () {
   return noop.apply(this, arguments);
 };
 
+// Similar to `gulp.src()` but the pattern is relative to `SRC_DIR`
+// and files are automatically watched when not in production mode.
 var src = (function () {
   if (PRODUCTION)
   {
     return function (pattern) {
-      return gulp.src(SRC_DIR +'/'+ pattern, {
+      return gulp.src(pattern, {
         base: SRC_DIR,
+        cwd: SRC_DIR,
       });
     };
   }
@@ -128,15 +133,22 @@ var src = (function () {
   // gulp-plumber prevents streams from disconnecting when errors.
   // See: https://gist.github.com/floatdrop/8269868#file-thoughts-md
   return function (pattern) {
-    return $.watch({
-      glob: SRC_DIR +'/'+ pattern,
+    return gulp.src(pattern, {
       base: SRC_DIR,
-    }).pipe($.plumber({
-      errorHandler: console.error,
-    }));
+      cwd: SRC_DIR,
+    }).pipe(
+      $.watch()
+    ).pipe(
+      $.plumber({
+        errorHandler: console.error,
+      })
+    );
   };
 })();
 
+// Similar to `gulp.dst()` but the output directory is always
+// `DIST_DIR` and files are automatically live-reloaded when not in
+// production mode.
 var dest = (function () {
   if (PRODUCTION)
   {
@@ -245,4 +257,3 @@ gulp.task('test', function () {
 //------------------------------------------------------------------------------
 
 gulp.task('default', ['build']);
-
