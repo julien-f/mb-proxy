@@ -26,25 +26,23 @@ var readFile = Promise.promisify(fs.readFile);
 var writeFile = Promise.promisify(fs.writeFile);
 
 var waitEvent = function (emitter, name) {
-  var deferred = Promise.defer();
+  return new Promise(function (resolve, reject) {
+    emitter.once(name, function () {
+      resolve(
+        arguments.length > 1 ?
+        [].splice.call(arguments) :
+        arguments[0]
+      );
+    });
 
-  emitter.once(name, function () {
-    deferred.resolve(
-      arguments.length > 1 ?
-      [].splice.call(arguments) :
-      arguments[0]
-    );
+    emitter.once('error', function () {
+      reject(
+        arguments.length > 1 ?
+        [].splice.call(arguments) :
+        arguments[0]
+      );
+    });
   });
-
-  emitter.once('error', function () {
-    deferred.reject(
-      arguments.length > 1 ?
-      [].splice.call(arguments) :
-      arguments[0]
-    );
-  });
-
-  return deferred.promise;
 };
 
 //====================================================================
