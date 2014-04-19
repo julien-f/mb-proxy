@@ -14,8 +14,8 @@
   "author": "Julien Fontanet <julien.fontanet@isonoe.net> (http://julien.isonoe.net/)",
   "license": "ISC",
   "dependencies": {
-    "bluebird": "^1.1.1",
-    "connect": "^2.14.3",
+    "bluebird": "^1.2.3",
+    "connect": "^2.14.4",
     "lodash": "^2.4.1",
     "mkdirp": "^0.3.5",
     "strip-json-comments": "^0.1.1",
